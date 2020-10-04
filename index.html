@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Quick start. Local static application</title>
+</head>
+<script src="https://yandex.st/jquery/2.1.1/jquery.min.js"></script>
+<style type="text/css">
+    table{
+        border-spacing: 0;
+        text-align: left;
+    }
+    tr:nth-child(1){
+        background: #27abbb75 !important;
+        color: #000 ;
+    }
+    tr:nth-child(1)>th{
+        padding: 1em .5em;
+    }
+    td{
+        padding: .5em;
+    }
+    tr:nth-child(2n+1) {
+        background: #f0f0f0; /* Цвет фона */
+    }
+    .ASSIGNED_BY_ID{
+        width: auto;
+    }
+    .container {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+    }
+    .container {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+    }
+</style>
+<script src="//api.bitrix24.com/api/v1/"></script>
+<body>
+<div class="container">
+    <table class="container__table">
+        <tr>
+            <th>ID</th>
+            <th>TITLE</th>
+            <th>OPPORTUNITY</th>
+            <th>PROBABILITY</th>
+            <th>ASSIGNED_BY_ID</th>
+            <th>DATE_CREATE</th>
+            <th>USER_INPUT</th>
+            <th>ВРЕМЕНИ С МОМЕНТА СОЗДАНИЯ</th>
+        </tr>
+    </table>
+</div>
+
+</body>
+<script>
+    $(document).ready(function () {
+        let times = [];
+
+        BX24.init(function () {
+            BX24.callMethod(
+                "crm.deal.list",
+                {
+                    order: {"DATA_CREATE": "ASC"},
+                    filter: {"CLOSED": "N"},
+                    select: ["ID", "TITLE", "OPPORTUNITY", "PROBABILITY", "ASSIGNED_BY_ID", "DATE_CREATE", "UF_CRM_1601571079031"]
+                },
+                function (result) {
+                    if (result.error())
+                        console.error(result.error());
+                    else {
+                        var data = result.data();
+                        for (indexDeal in data) {
+                            if (data[indexDeal].PROBABILITY == null) data[indexDeal].PROBABILITY = "Не указана";
+                            let dateCreate = new Date(Date.parse(data[indexDeal].DATE_CREATE));
+                            $('.container__table').append("<tr>" + '<td>' + data[indexDeal].ID + '</td>' + "<td>" + data[indexDeal].TITLE + '</td>' + "<td>" + data[indexDeal].OPPORTUNITY + '</td>' + "<td>" + data[indexDeal].PROBABILITY + '</td>' + "<td>" + data[indexDeal].ASSIGNED_BY_ID + '</td>' + "<td>" + dateCreate.toLocaleDateString() + '</td>' + "<td>" + data[indexDeal].UF_CRM_1601571079031 + "</td>" + '<td class="timer">' + dateCreate + '</td></tr>');
+                            times.push(Date.parse(data[indexDeal].DATE_CREATE));
+                        }
+                        if (result.more())
+                            result.next();
+                    }
+                }
+            );
+        });
+        setTime(times);
+        function setTime(arr) {
+            setInterval(() => {
+                let timeNow = new Date();
+                let setTimer = $(".timer").map(function (indx, element) {
+                    let timer = Date.parse(timeNow) - arr[indx];
+                    let dateTimer = new Date(timer);
+                    let dateDay = Math.floor(timer / 1000 / 60 / 60 / 24);
+                    if (timer / 1000 / 60 / 60 / 24 > 0) {
+                        if (dateDay === 1) {
+                            return $(element).text(Math.floor(timer / 1000 / 60 / 60 / 24) + " день, " + dateTimer.toLocaleTimeString());
+                        }
+                        if (dateDay > 1 && dateDay < 5) {
+                            return $(element).text( Math.floor(timer / 1000 / 60 / 60 / 24) + " дня, " + dateTimer.toLocaleTimeString());
+                        }
+                        if (dateDay > 6) {
+                            return $(element).text( Math.floor(timer / 1000 / 60 / 60 / 24) + " дней, " + dateTimer.toLocaleTimeString());
+                        }
+                    } else
+                        return $(element).text( Math.round((timer / 1000 / 60 / 60)));
+                });
+            }, 1000);
+
+        }
+
+
+    });
+</script>
+</html>
